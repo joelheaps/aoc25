@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Range simply represents a range of product IDs, inclusive
@@ -39,6 +40,8 @@ func getRanges(input string) []Range {
 }
 
 func main() {
+	start := time.Now()
+
 	if len(os.Args) < 3 {
 		fmt.Println("Please provide {part1,part2} and {input_file} as arguments")
 		os.Exit(1)
@@ -55,6 +58,10 @@ func main() {
 	case "part2":
 		fmt.Println(sumInvalids(ranges, isValidProductId2))
 	}
+
+	t := time.Now()
+	elapsed := t.Sub(start)
+	fmt.Println(elapsed)
 }
 
 // isValidProductId returns false when a product IDs first half is the same as its second half

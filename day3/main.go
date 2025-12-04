@@ -8,8 +8,16 @@ import (
 	"time"
 )
 
+// BatteryBank represents a set of (unconnected) batteries
 type BatteryBank []int
 
+// SelectedBattery represents a connected ("on") battery
+type SelectedBattery struct {
+	pos   int
+	power int
+}
+
+// getBanks parses battery banks from the input, returning them as a list of lists
 func getBanks(input string) []BatteryBank {
 	banks := []BatteryBank{}
 	for line := range strings.SplitSeq(input, "\n") {
@@ -22,46 +30,46 @@ func getBanks(input string) []BatteryBank {
 	return banks
 }
 
+// powInt is a simple utility function for raising integers to a power (used to calculate total "joltages")
 func powInt(x, y int) int {
 	return int(math.Pow(float64(x), float64(y)))
 }
 
-type battery struct {
-	pos   int
-	power int
-}
-
-func getHighestCombo(bb BatteryBank, batteryCount int) int {
-	sb := make([]battery, batteryCount) // selectedBatteries
-	for i, val := range bb {
-		for batNum, bat := range sb {
-			minDistFromEnd := batteryCount - batNum
-			// Check that this battery is at least n positions from end
-			if i > len(bb)-minDistFromEnd {
+// getHighestCombo returns the highest possible "joltage" produceable from the given bank using the number
+// of batteries specified.
+func getHighestCombo(bBank BatteryBank, batteryCount int) int {
+	sel := make([]SelectedBattery, batteryCount)
+	minDistFromEnd := 0
+	for i, val := range bBank {
+		for batNum, bat := range sel {
+			minDistFromEnd = batteryCount - batNum
+			if i > len(bBank)-minDistFromEnd {
+				// Leave room for remaining batteries
 				continue
 			}
-			// Validate this battery's position is greater than previous's; move it
-			// forward if not. Otherwise, move it forward if this position's power
+			// If current selection for this battery is left of the previous battery, it needs
+			// to be moved forward. Otherwise, move it forward if this position's power
 			// is greater than current selection.
-			if (batNum > 0 && bat.pos <= sb[batNum-1].pos) || val > bat.power {
+			if (batNum > 0 && bat.pos <= sel[batNum-1].pos) || val > bat.power {
 				bat.pos = i
 				bat.power = val
-				sb[batNum] = bat
+				sel[batNum] = bat
 			}
 		}
 	}
 
-	sum := 0
-	for i, bat := range sb {
-		sum += bat.power * powInt(10, batteryCount-i-1)
+	joltageSum := 0
+	for i, bat := range sel {
+		joltageSum += bat.power * powInt(10, batteryCount-i-1)
 	}
-	return sum
+	return joltageSum
 }
 
-func sumHighestJoltages(bbanks []BatteryBank, batteryCount int) int {
+// sumHighestJoltages returns the sum of best-case joltages across all battery banks
+func sumHighestJoltages(bBanks []BatteryBank, batteryCount int) int {
 	sum := 0
 	this := 0
-	for _, bb := range bbanks {
+	for _, bb := range bBanks {
 		this = getHighestCombo(bb, batteryCount)
 		sum += this
 	}
